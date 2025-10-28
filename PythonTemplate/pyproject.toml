@@ -1,7 +1,0 @@
-[project]
-name = "{YOUR PROJECT NAME}"
-version = "{YOUR PROJECT VERSION}"
-description = "{YOUR PROJECT DESCRIPTION}"
-readme = "README.md"
-requires-python = ">=3.13"
-dependencies = []
