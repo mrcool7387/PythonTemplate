@@ -1,115 +1,56 @@
+from rich.traceback import install as rich_tcbck_install
+rich_tcbck_install()
+#============================#
+
+import toml
 from pathlib import Path
-import sys
-import tomllib as _toml_loader
-import tomli as _toml_loader
-import toml as _toml_loader
+import logging
+from rich.logging import RichHandler
+from datetime import datetime
+import getpass
+import platform
+from _classes import PyProjectError
 
-#!/usr/bin/env python3
-"""
-Check pyproject.toml for name, version and description fields.
+def _get_project_name() -> str:
+    pyproject = toml.load(Path("./pyproject.toml"))
+    return pyproject["project"]["name"]
 
-Saves as /C:/Users/AlexanderSchwarz/Desktop/PythonTemplate/_template.py
-"""
+# ensure logs directory exists and add a file handler alongside the RichHandler
+logs_dir = Path("./logs")
+logs_dir.mkdir(parents=True, exist_ok=True)
+log_file = f"logs/{_get_project_name()}-{datetime.now().strftime("%d%m%Y%H%M%S")}-{platform.node()}.log"
 
-# toml loader: prefer stdlib tomllib (3.11+), then tomli, then toml
-try:
+file_handler = logging.FileHandler(Path(log_file), encoding="utf-8")
+file_handler.setLevel(logging.DEBUG)
+file_formatter = logging.Formatter("%(asctime)s @ %(name)s | %(levelname)s | %(message)s")
+file_handler.setFormatter(file_formatter)
 
-    def _load_toml(path: Path):
-        with path.open("rb") as f:
-            return _toml_loader.load(f)
-except Exception:
-    try:
+console_handler = RichHandler(rich_tracebacks=True)
+console_handler.setLevel(logging.DEBUG)
 
-        def _load_toml(path: Path):
-            with path.open("rb") as f:
-                return _toml_loader.load(f)
-    except Exception:
-        try:
+logging.basicConfig(
+    level=logging.DEBUG,
+    handlers=[console_handler, file_handler]
+)
 
-            def _load_toml(path: Path):
-                return _toml_loader.loads(path.read_text(encoding="utf-8"))
-        except Exception:
-            print("Missing TOML parser. Use Python 3.11+ or install 'tomli' (pip install tomli).", file=sys.stderr)
-            sys.exit(3)
+l = logging.getLogger(_get_project_name())
+l.debug("Logger initialized.")
 
+def check_pyproject(path: Path = Path("./pyproject.toml")):
+    l.debug(f"Checking pyproject.toml at: \"{path.resolve()}\"")
+    pyproject = toml.load(path)
 
-def find_pyproject(start: Path = None) -> Path | None:
-    start = (Path(start) if start else Path.cwd()).resolve()
-    for p in [start] + list(start.parents):
-        candidate = p / "pyproject.toml"
-        if candidate.is_file():
-            return candidate
-    return None
-
-
-def extract_project_section(data: dict) -> tuple[str, dict] | tuple[None, None]:
-    # PEP 621
-    if isinstance(data.get("project"), dict):
-        return "project", data["project"]
-    # Poetry
-    tool = data.get("tool")
-    if isinstance(tool, dict):
-        poetry = tool.get("poetry")
-        if isinstance(poetry, dict):
-            return "tool.poetry", poetry
-        # flit uses tool.flit.metadata
-        flit = tool.get("flit")
-        if isinstance(flit, dict):
-            metadata = flit.get("metadata")
-            if isinstance(metadata, dict):
-                return "tool.flit.metadata", metadata
-    return None, None
+    if pyproject["project"]["name"] == "YOURPROJECTNAME":
+        l.error("The 'name' field in pyproject.toml is not set.")
+        raise PyProjectError("Please update the 'name' field in pyproject.toml to your project's name.")
+    if pyproject["project"]["version"] == "0.0.0":
+        l.error("The 'version' field in pyproject.toml is not set.")
+        raise PyProjectError("Please update the 'version' field in pyproject.toml to your project's version.")
+    if pyproject["project"]["description"] == "YOURPROJECTDESCRIPTION":
+        l.error("The 'description' field in pyproject.toml is not set.")
+        raise PyProjectError("Please update the 'description' field in pyproject.toml to your project's description.")
+    
 
 
-def check_fields(section_name: str, section: dict) -> int:
-    # prefer common keys; treat 'description' == 'desc' similarly
-    name = section.get("name")
-    version = section.get("version")
-    description = section.get("description") or section.get("desc") or section.get("summary")
-
-    missing = []
-    if not name:
-        missing.append("name")
-    if not version:
-        missing.append("version")
-    if not description:
-        missing.append("description/desc")
-
-    print(f"Using section: {section_name}")
-    if missing:
-        print("Missing fields:", ", ".join(missing), file=sys.stderr)
-        # show what is present
-        print("Found values (may be empty):")
-        print("  name   :", repr(name))
-        print("  version:", repr(version))
-        print("  desc   :", repr(description))
-        return 2
-    # success: print concise values
-    print("name   :", name)
-    print("version:", version)
-    print("desc   :", description)
-    return 0
-
-
-def main() -> int:
-    pyproject = find_pyproject()
-    if not pyproject:
-        print("pyproject.toml not found in current directory or any parent.", file=sys.stderr)
-        return 4
-
-    try:
-        data = _load_toml(pyproject)
-    except Exception as e:
-        print(f"Failed to parse {pyproject}: {e}", file=sys.stderr)
-        return 5
-
-    section_name, section = extract_project_section(data)
-    if not section:
-        print("No recognized project section found (project, tool.poetry, tool.flit.metadata).", file=sys.stderr)
-        return 6
-
-    return check_fields(section_name, section)
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+# ==== MAIN ==== #
+check_pyproject(Path("./pyproject.toml"))

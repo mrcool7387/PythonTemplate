@@ -1,7 +1,10 @@
 [project]
-name = "{YOUR PROJECT NAME}"
-version = "{YOUR PROJECT VERSION}"
-description = "{YOUR PROJECT DESCRIPTION}"
+name = "YOURPROJECTNAME"
+version = "0.0.0"
+description = "YOURPROJECTDESCRIPTION"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "rich>=14.2.0",
+    "toml>=0.10.2",
+]
