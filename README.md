@@ -1,6 +1,11 @@
 # Python Template
 
-This is a Python project template pre-configured with a robust logging setup, `pyproject.toml` validation, and helper scripts for development.
+> [!IMPORTANT]
+> This is a Template for Python Projects. This is not a App.
+
+
+> [!WARNING]
+> This is a Python project template pre-configured with a robust logging setup, `pyproject.toml` validation, and helper scripts for development.
 
 ## Important: Configuration
 
