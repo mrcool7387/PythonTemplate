@@ -1,3 +1,5 @@
-from _template import l
+from _template import LOGGER, TMPDIR, TMPFILE
 
-l.exception("Running Main Module")
+LOGGER.exception("Running Main Module")
+
+print(TMPFILE, TMPDIR)
